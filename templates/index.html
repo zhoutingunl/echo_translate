@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EchoTranslate · AI 同声传译助手</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">🎧</span>
+    <div>
+      <h1>EchoTranslate</h1>
+      <p class="tagline">AI 同声传译 · 实时字幕 · 自动纠错</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <span id="conn" class="pill pill-off">未连接</span>
+    <a class="pill pill-link" href="/dashboard" target="_blank">QoS Dashboard ↗</a>
+  </div>
+</header>
+
+<main class="layout">
+  <section class="stage">
+    <div class="controls">
+      <button id="micBtn" class="btn btn-primary">🎙️ 开始聆听</button>
+
+      <label class="ctl">
+        <span>语言</span>
+        <select id="langSel">
+          {% for code, name in languages.items() %}
+          <option value="{{ code }}">{{ name }} → 中文</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="ctl">
+        <span>模式</span>
+        <select id="modeSel">
+          <option value="presentation">演讲模式（完整）</option>
+          <option value="meeting">会议模式（低延迟）</option>
+        </select>
+      </label>
+
+      <label class="ctl toggle">
+        <input type="checkbox" id="ttsChk"><span>🔊 中文语音播报</span>
+      </label>
+
+      <div class="spacer"></div>
+
+      <label class="ctl">
+        <span>示例回放</span>
+        <select id="replaySel"></select>
+      </label>
+      <button id="replayBtn" class="btn">▶️ 播放示例</button>
+      <button id="summaryBtn" class="btn">📝 生成纪要</button>
+    </div>
+
+    <div id="subtitles" class="subtitles">
+      <div class="empty-hint">
+        <p>点击 <b>开始聆听</b> 实时翻译麦克风/系统音频，或选择 <b>示例回放</b> 一键演示自动纠错。</p>
+        <p class="muted">提示：实时聆听需使用 Chrome 浏览器并允许麦克风权限。最近 {{ revision_window }} 秒内的字幕可被自动纠正。</p>
+      </div>
+    </div>
+    <div id="interim" class="interim"></div>
+
+    <div id="summaryBox" class="summary-box hidden">
+      <h3>📝 本场要点纪要</h3>
+      <div id="summaryText"></div>
+    </div>
+  </section>
+
+  <aside class="sidebar">
+    <div class="card">
+      <h3>实时 QoS</h3>
+      <ul class="stats">
+        <li><span>字幕延迟(avg)</span><b id="mAvg">–</b></li>
+        <li><span>P95 延迟</span><b id="mP95">–</b></li>
+        <li><span>翻译成功率</span><b id="mSucc">–</b></li>
+        <li><span>纠错次数</span><b id="mCorr">–</b></li>
+        <li><span>术语命中率</span><b id="mGlo">–</b></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>术语表 <span class="muted">(术语记忆)</span></h3>
+      <div class="glossary-add">
+        <input id="gTerm" placeholder="原词，如 Kubernetes">
+        <input id="gTrans" placeholder="固定译法（可留空）">
+        <button id="gAdd" class="btn btn-sm">添加</button>
+      </div>
+      <ul id="glossaryList" class="glossary-list"></ul>
+    </div>
+
+    <div class="card">
+      <h3>说明</h3>
+      <p class="muted small">字幕带 <span class="badge">修正</span> 标记表示已被自动纠错。
+      原文为浅色小字，中文译文为主显示。语音识别(ASR)与语音播报(TTS)由浏览器原生能力提供，
+      翻译与纠错由 MiniMax 大模型驱动。</p>
+    </div>
+  </aside>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
