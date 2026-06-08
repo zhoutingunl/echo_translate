@@ -80,9 +80,7 @@ class SessionPipeline:
             return None
         self.track("subtitle_render")
         if ev.kind == NEW:
-            seg = self._translate(ev.segment)
-            self._maybe_recontextualize(seg)
-            return seg
+            return self._translate(ev.segment)
         if ev.kind == REVISE:
             return self._retranslate(ev.segment, reason="asr")
         return None
@@ -120,15 +118,6 @@ class SessionPipeline:
                        "previous": before, "segment": seg.to_dict()})
             self._persist(seg)
         return seg
-
-    def _maybe_recontextualize(self, curr: Segment) -> None:
-        """After a new segment, correct the previous one if context now helps."""
-        finals = [s for s in self.asr.segments if s.status == FINAL]
-        if len(finals) < 2:
-            return
-        prev = finals[-2]
-        if self.revision.should_recontextualize(prev, curr):
-            self._retranslate(prev, reason="context")
 
     # --------------------------------------------------------------- summarize
     def summarize(self) -> str:

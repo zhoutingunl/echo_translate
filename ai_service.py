@@ -131,11 +131,15 @@ class AIService:
     # ------------------------------------------------------------- completion
     def _complete(self, system: str, user: str) -> AIResult:
         if self._completer is not None:
+            model = self._providers[0][0] if self._providers else "test"
             t0 = time.time()
-            text = self._completer(system, user, self._providers[0][0] if self._providers else "test")
+            try:
+                text = self._completer(system, user, model)
+            except Exception as e:  # surface as AIError so callers handle uniformly
+                self.errors += 1
+                raise AIError(str(e)) from e
             self.calls += 1
-            return AIResult(text=_clean(text),
-                            model=self._providers[0][0] if self._providers else "test",
+            return AIResult(text=_clean(text), model=model,
                             latency_ms=(time.time() - t0) * 1000, fallback_used=False)
 
         last_err: Exception | None = None

@@ -28,7 +28,7 @@ def _get_int(name: str, default: int) -> int:
 
 def _get_bool(name: str, default: bool = False) -> bool:
     raw = os.environ.get(name)
-    if raw is None:
+    if raw is None or raw.strip() == "":
         return default
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
