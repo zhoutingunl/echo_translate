@@ -32,6 +32,7 @@ class SessionPipeline:
                  store: Optional[Store] = None, glossary: Optional[Glossary] = None,
                  mode: str = PRESENTATION, source_lang: str = "English",
                  emit: Optional[Emit] = None,
+                 shared_metrics: Optional[MetricsCollector] = None,
                  clock: Callable[[], float] = time.time) -> None:
         self.session_id = session_id
         self.ai = ai
@@ -47,6 +48,8 @@ class SessionPipeline:
                                             context_segments=config.context_segments, clock=clock)
         self.revision = RevisionWindow(config.revision_window_sec, clock=clock)
         self.metrics = MetricsCollector(clock=clock)
+        # optional process-wide collector the dashboard aggregates over
+        self.shared_metrics = shared_metrics
         if store:
             store.create_session(session_id, source_lang, mode, started_at=clock())
 
@@ -110,6 +113,8 @@ class SessionPipeline:
         if seg.translation and seg.translation != before:
             self.revision.mark_corrected(seg)
             self.metrics.record_correction()
+            if self.shared_metrics:
+                self.shared_metrics.record_correction()
             self.track("subtitle_corrected", {"reason": reason})
             self.emit({"type": "revision", "reason": reason,
                        "previous": before, "segment": seg.to_dict()})
@@ -142,11 +147,13 @@ class SessionPipeline:
     def _record(self, seg: Segment, *, success: bool) -> None:
         e2e = max(0.0, (seg.t_translated - seg.t_recognized) * 1000.0)
         glo = self.glossary.enforce(seg.translation, seg.source)
-        self.metrics.record_translation(
-            end_to_end_ms=e2e,
-            translate_ms=self.translator.last_result.latency_ms if self.translator.last_result else 0.0,
-            source_chars=len(seg.source), target_chars=len(seg.translation),
-            glossary_present=glo.hits, glossary_preserved=glo.preserved, success=success)
+        translate_ms = self.translator.last_result.latency_ms if self.translator.last_result else 0.0
+        for sink in (self.metrics, self.shared_metrics):
+            if sink is not None:
+                sink.record_translation(
+                    end_to_end_ms=e2e, translate_ms=translate_ms,
+                    source_chars=len(seg.source), target_chars=len(seg.translation),
+                    glossary_present=glo.hits, glossary_preserved=glo.preserved, success=success)
 
     def _persist(self, seg: Segment) -> None:
         if self.store:
@@ -154,6 +161,8 @@ class SessionPipeline:
 
     def track(self, event: str, meta: Optional[dict] = None) -> None:
         self.metrics.track(event)
+        if self.shared_metrics:
+            self.shared_metrics.track(event)
         if self.store:
             self.store.log_event(self.session_id, event, meta)
 
