@@ -150,10 +150,11 @@ echo_translate/
 
 ## 9. 演示
 
-- **录屏**：[`demo/output/echo_translate_demo.mp4`](./demo/output/echo_translate_demo.mp4) —— 端到端走查（实时字幕 → 自动纠错 → 术语 → 纪要 → QoS 看板）；分镜一览见 [`demo/output/storyboard.png`](./demo/output/storyboard.png)。
+端到端走查（实时字幕 → 自动纠错 → 术语 → 纪要 → QoS 看板，**字幕为真实 AI 实时产生**）：
+
+![demo](./demo/output/echo_translate_demo.gif)
+
+- **带中文画外音的录屏**（推荐）：[`demo/output/echo_translate_demo_narrated.mp4`](./demo/output/echo_translate_demo_narrated.mp4) —— 烧录解说字幕 + 中文 TTS 旁白。
+- **无旁白录屏**：[`demo/output/echo_translate_demo.mp4`](./demo/output/echo_translate_demo.mp4)；分镜一览 [`demo/output/storyboard.png`](./demo/output/storyboard.png)；解说字幕轨 [`demo/output/captions.srt`](./demo/output/captions.srt)。
 - **讲解脚本**：[`DEMO.md`](./DEMO.md)（5 分钟分镜）。
-- **复现录屏**：见 [`demo/README.md`](./demo/README.md)（Playwright 驱动真实 UI 与 AI 管线，无需麦克风）。
-
-录屏关键帧（自动纠错 + QoS 达标）：
-
-![storyboard](./demo/output/storyboard.png)
+- **一键复现录屏 + 配音**：见 [`demo/README.md`](./demo/README.md)（Playwright 驱动真实 UI 与 AI 管线，无需麦克风）。
