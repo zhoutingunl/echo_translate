@@ -63,6 +63,50 @@ def test_ws_requires_start_first(app_state):
     assert any(e["type"] == "error" for e in ws.sent)
 
 
+class FakeCloudASR:
+    """Replaces app.CloudASR: a couple of fed frames trigger interim + final."""
+    last = None
+
+    def __init__(self, *, api_key, model, sample_rate, source_lang, on_interim, on_final):
+        self.on_interim, self.on_final = on_interim, on_final
+        self.fed, self.started, self.stopped = 0, False, False
+        FakeCloudASR.last = self
+
+    def start(self):
+        self.started = True
+
+    def feed(self, pcm):
+        self.fed += 1
+        if self.fed == 1:
+            self.on_interim("we use redis")
+        elif self.fed == 2:
+            self.on_final("we use redis")
+
+    def stop(self):
+        self.stopped = True
+
+
+def test_ws_cloud_asr_path(config, monkeypatch):
+    import app as app_module
+    monkeypatch.setattr(app_module, "CloudASR", FakeCloudASR)
+    config.dashscope_api_key = "test-key"  # enables the cloud branch
+    ai = AIService(config, completer=fake_completer)
+    flask_app, state = create_app(config, ai=ai, store=Store(":memory:"))
+
+    ws = FakeWS([
+        {"action": "start", "session_id": "c", "source_lang": "English", "asr": "cloud"},
+    ])
+    # binary PCM frames pass through verbatim; FakeWS.receive returns them as bytes
+    ws.inbox += [b"\x00\x01\x02\x03", b"\x04\x05\x06\x07",
+                 json.dumps({"action": "stop"})]
+    _serve_ws(ws, state)
+    types = [e["type"] for e in ws.sent]
+    started = next(e for e in ws.sent if e["type"] == "started")
+    assert started["asr"] == "cloud"
+    assert "interim" in types and "segment" in types
+    assert FakeCloudASR.last.started and FakeCloudASR.last.stopped
+
+
 def test_ws_full_session(app_state):
     _, state = app_state
     msgs = [

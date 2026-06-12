@@ -128,6 +128,13 @@ EchoTranslate 是一款实时 AI 同声传译助手。
 
 增量文本。
 
+实现采用双后端：
+
+* Chrome / Edge：浏览器 Web Speech API（零延迟，首选）
+* Safari / Firefox：服务端百炼 `paraformer-realtime-v2`，浏览器以 16kHz PCM 经 WebSocket 流式上送
+
+两后端产出统一的 interim / final，下游翻译与纠错管线完全复用。
+
 ---
 
 ## 实时翻译

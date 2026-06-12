@@ -1,12 +1,15 @@
 """EchoTranslate web app — HTTP routes, WebSocket pipeline, replay demo.
 
-Run with ``python app.py`` (threaded Werkzeug + flask-sock WebSocket). The browser
-does ASR/TTS via the Web Speech API; this server runs the AI translation + revision
-pipeline and streams subtitles/corrections back over ``/ws``.
+Run with ``python app.py`` (threaded Werkzeug + flask-sock WebSocket). ASR is either
+the browser's Web Speech API (Chrome/Edge) or — for Safari/Firefox — Bailian cloud
+ASR, fed by 16 kHz PCM streamed as binary WebSocket frames. TTS is the browser's
+SpeechSynthesis. This server runs the AI translation + revision pipeline and streams
+subtitles/corrections back over ``/ws``.
 """
 from __future__ import annotations
 
 import json
+import threading
 import uuid
 from dataclasses import dataclass
 
@@ -14,6 +17,7 @@ from flask import Flask, jsonify, render_template, request
 from flask_sock import Sock
 
 from ai_service import AIService
+from asr_cloud import CloudASR
 from config import Config, load_config
 from dashboard import build_dashboard
 from db import Store
@@ -105,61 +109,103 @@ def create_app(config: Config | None = None, *, ai: AIService | None = None,
 
 
 def _serve_ws(ws, state: AppState) -> None:
-    """One translation session per WebSocket connection."""
+    """One translation session per WebSocket connection.
+
+    Text frames carry JSON control/transcript messages; binary frames carry 16 kHz
+    mono PCM audio for the cloud (Bailian) ASR path. ``emit`` is lock-guarded because
+    the cloud ASR callback runs on the dashscope SDK's own thread.
+    """
     pipeline: SessionPipeline | None = None
+    cloud: CloudASR | None = None
+    send_lock = threading.Lock()
 
     def emit(ev: dict) -> None:
-        ws.send(json.dumps(ev, ensure_ascii=False))
+        with send_lock:
+            ws.send(json.dumps(ev, ensure_ascii=False))
 
-    while True:
-        raw = ws.receive()
-        if raw is None:
-            break
-        try:
-            msg = json.loads(raw)
-        except (ValueError, TypeError):
-            continue
-        action = msg.get("action")
+    def stop_cloud() -> None:
+        nonlocal cloud
+        if cloud is not None:
+            cloud.stop()
+            cloud = None
 
-        if action == "start":
-            sid = msg.get("session_id") or uuid.uuid4().hex[:12]
-            glossary = Glossary(dict(state.glossary_seed))
-            glossary.update(state.store.load_glossary())
-            pipeline = SessionPipeline(
-                sid, state.ai, state.config, store=state.store, glossary=glossary,
-                mode=msg.get("mode", "presentation"),
-                source_lang=msg.get("source_lang", "English"),
-                emit=emit, shared_metrics=state.metrics)
-            pipeline.track("audio_start")
-            emit({"type": "started", "session_id": sid,
-                  "glossary": glossary.terms})
-            continue
+    try:
+        while True:
+            raw = ws.receive()
+            if raw is None:
+                break
 
-        if pipeline is None:
-            emit({"type": "error", "message": "send 'start' first"})
-            continue
+            # binary frame -> PCM audio for the cloud ASR
+            if isinstance(raw, (bytes, bytearray)):
+                if cloud is not None:
+                    cloud.feed(bytes(raw))
+                continue
 
-        if action == "interim":
-            pipeline.on_interim(msg.get("text", ""))
-        elif action == "final":
-            pipeline.on_final(msg.get("text", ""), t_audio=msg.get("t_audio", 0.0))
-            emit({"type": "metrics", "data": pipeline.snapshot()})
-        elif action == "revise":
-            ev = pipeline.asr.revise(int(msg.get("seg_id", 0)), msg.get("text", ""))
-            if ev and ev.segment is not None:
-                pipeline._retranslate(ev.segment, reason="asr")
+            try:
+                msg = json.loads(raw)
+            except (ValueError, TypeError):
+                continue
+            action = msg.get("action")
+
+            if action == "start":
+                stop_cloud()
+                sid = msg.get("session_id") or uuid.uuid4().hex[:12]
+                source_lang = msg.get("source_lang", "English")
+                glossary = Glossary(dict(state.glossary_seed))
+                glossary.update(state.store.load_glossary())
+                pipeline = SessionPipeline(
+                    sid, state.ai, state.config, store=state.store, glossary=glossary,
+                    mode=msg.get("mode", "presentation"), source_lang=source_lang,
+                    emit=emit, shared_metrics=state.metrics)
+                pipeline.track("audio_start")
+                # cloud ASR fallback: stream binary PCM -> Bailian -> pipeline
+                if msg.get("asr") == "cloud" and state.config.cloud_asr_available:
+                    pl = pipeline  # bind this instance (callback runs on SDK thread)
+
+                    def _cloud_final(text: str, pl=pl) -> None:
+                        pl.on_final(text)
+                        emit({"type": "metrics", "data": pl.snapshot()})
+                    cloud = CloudASR(
+                        api_key=state.config.dashscope_api_key,
+                        model=state.config.dashscope_asr_model,
+                        sample_rate=state.config.asr_sample_rate,
+                        source_lang=source_lang,
+                        on_interim=pipeline.on_interim, on_final=_cloud_final)
+                    cloud.start()
+                    pipeline.track("asr_cloud_start")
+                emit({"type": "started", "session_id": sid,
+                      "asr": "cloud" if cloud else "webspeech",
+                      "glossary": glossary.terms})
+                continue
+
+            if pipeline is None:
+                emit({"type": "error", "message": "send 'start' first"})
+                continue
+
+            if action == "interim":
+                pipeline.on_interim(msg.get("text", ""))
+            elif action == "final":
+                pipeline.on_final(msg.get("text", ""), t_audio=msg.get("t_audio", 0.0))
                 emit({"type": "metrics", "data": pipeline.snapshot()})
-        elif action == "mode":
-            pipeline.set_mode(msg.get("mode", "presentation"))
-        elif action == "glossary_add":
-            pipeline.add_glossary_term(msg.get("term", ""), msg.get("translation"))
-        elif action == "summarize":
-            pipeline.summarize()
-        elif action == "stop":
-            pipeline.track("audio_stop")
-            pipeline.close()
-            emit({"type": "metrics", "data": pipeline.snapshot()})
-            pipeline = None
+            elif action == "revise":
+                ev = pipeline.asr.revise(int(msg.get("seg_id", 0)), msg.get("text", ""))
+                if ev and ev.segment is not None:
+                    pipeline._retranslate(ev.segment, reason="asr")
+                    emit({"type": "metrics", "data": pipeline.snapshot()})
+            elif action == "mode":
+                pipeline.set_mode(msg.get("mode", "presentation"))
+            elif action == "glossary_add":
+                pipeline.add_glossary_term(msg.get("term", ""), msg.get("translation"))
+            elif action == "summarize":
+                pipeline.summarize()
+            elif action == "stop":
+                stop_cloud()
+                pipeline.track("audio_stop")
+                pipeline.close()
+                emit({"type": "metrics", "data": pipeline.snapshot()})
+                pipeline = None
+    finally:
+        stop_cloud()
 
 
 def main() -> None:  # pragma: no cover

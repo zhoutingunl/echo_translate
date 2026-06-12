@@ -46,6 +46,11 @@ class Config:
     hermes_base: str = "http://10.210.32.30:8787"
     hermes_model: str = "MiniMax-M3"
 
+    # --- Bailian / DashScope cloud ASR (browser fallback) ---
+    dashscope_api_key: str = ""
+    dashscope_asr_model: str = "paraformer-realtime-v2"
+    asr_sample_rate: int = 16000
+
     # --- server ---
     host: str = "127.0.0.1"
     port: int = 8000
@@ -71,10 +76,17 @@ class Config:
     def has_ai_key(self) -> bool:
         return bool(self.minimax_api_key)
 
+    @property
+    def cloud_asr_available(self) -> bool:
+        return bool(self.dashscope_api_key)
+
     def public_dict(self) -> dict[str, Any]:
         """Config safe to expose to the browser (no secrets)."""
         d = asdict(self)
         d.pop("minimax_api_key", None)
+        d.pop("dashscope_api_key", None)
+        # let the UI know whether the cloud ASR fallback is configured
+        d["cloud_asr_available"] = self.cloud_asr_available
         return d
 
 
@@ -96,6 +108,9 @@ def load_config() -> Config:
         hermes_enabled=_get_bool("HERMES_ENABLED", False),
         hermes_base=_get("HERMES_BASE", "http://10.210.32.30:8787").rstrip("/"),
         hermes_model=_get("HERMES_MODEL", "MiniMax-M3"),
+        dashscope_api_key=_get("DASHSCOPE_API_KEY", ""),
+        dashscope_asr_model=_get("DASHSCOPE_ASR_MODEL", "paraformer-realtime-v2"),
+        asr_sample_rate=_get_int("ASR_SAMPLE_RATE", 16000),
         host=_get("HOST", "127.0.0.1"),
         port=_get_int("PORT", 8000),
         debug=_get_bool("DEBUG", False),
