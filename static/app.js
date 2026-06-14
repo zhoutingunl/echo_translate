@@ -135,7 +135,16 @@
 
   // ------------------------------------------------------------------- ASR
   function startMic() {
-    const backend = resolveBackend();
+    const source = $("srcSel") ? $("srcSel").value : "mic";
+    // tab/system audio can only feed the cloud ASR (Web Speech is mic-only)
+    let backend = resolveBackend();
+    if (source === "tab") {
+      if (!cloudAvailable) {
+        alert("「标签页/系统音频」需要云端百炼 ASR，但服务端未配置 DASHSCOPE_API_KEY。");
+        return;
+      }
+      backend = "cloud";
+    }
     if (!backend) {
       alert("当前浏览器不支持 Web Speech API，且服务端未配置云端百炼 ASR。\n请用 Chrome/Edge，或改用「示例回放」。");
       return;
@@ -144,11 +153,35 @@
     const lang = $("langSel").selectedOptions[0].textContent.split(" →")[0];
     const live = () => { listening = true; micBtn.textContent = "⏹️ 停止"; micBtn.classList.add("live"); };
     ensureSession(langCode, lang, backend).then(() => {
-      if (backend === "cloud") startCloudCapture().then(live).catch((err) => {
-        console.warn(err); alert("无法获取麦克风：" + err.message); send({ action: "stop" });
-      });
-      else { startWebSpeech(langCode); live(); }
+      if (backend === "cloud") {
+        acquireStream(source)
+          .then((stream) => startCloudCapture(stream))
+          .then(live)
+          .catch((err) => {
+            console.warn(err);
+            alert((source === "tab" ? "无法捕获标签页/系统音频：" : "无法获取麦克风：") + err.message
+              + (source === "tab" ? "\n请在弹窗中选择正在播放的标签页并勾选「分享标签页音频」。" : ""));
+            send({ action: "stop" });
+          });
+      } else { startWebSpeech(langCode); live(); }
     });
+  }
+
+  // Acquire the audio MediaStream for the chosen source.
+  async function acquireStream(source) {
+    if (source === "tab") {
+      // getDisplayMedia needs a video request; we keep only the audio track.
+      const ds = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      ds.getVideoTracks().forEach((t) => t.stop());
+      if (!ds.getAudioTracks().length)
+        throw new Error("未捕获到音频（请在分享弹窗勾选「分享标签页/系统音频」）");
+      ds.getAudioTracks()[0].addEventListener("ended", () => { if (listening) stopMic(); });
+      return ds;
+    }
+    return navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
   }
 
   function stopMic() {
@@ -177,10 +210,9 @@
     recog.start();
   }
 
-  // --- Bailian cloud ASR: capture mic -> 16kHz mono PCM16 -> WebSocket (binary) ---
-  async function startCloudCapture() {
-    micStream = await navigator.mediaDevices.getUserMedia({
-      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+  // --- Bailian cloud ASR: capture stream -> 16kHz mono PCM16 -> WebSocket (binary) ---
+  async function startCloudCapture(stream) {
+    micStream = stream;
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     srcNode = audioCtx.createMediaStreamSource(micStream);
     procNode = audioCtx.createScriptProcessor(4096, 1, 1);

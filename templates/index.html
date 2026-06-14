@@ -41,6 +41,14 @@
       </label>
 
       <label class="ctl">
+        <span>音频源</span>
+        <select id="srcSel">
+          <option value="mic">麦克风</option>
+          <option value="tab">标签页 / 系统音频</option>
+        </select>
+      </label>
+
+      <label class="ctl">
         <span>模式</span>
         <select id="modeSel">
           <option value="presentation">演讲模式（完整）</option>
@@ -65,7 +73,8 @@
     <div id="subtitles" class="subtitles">
       <div class="empty-hint">
         <p>点击 <b>开始聆听</b> 实时翻译麦克风/系统音频，或选择 <b>示例回放</b> 一键演示自动纠错。</p>
-        <p class="muted">提示：Chrome/Edge 用浏览器原生识别（零延迟）；Safari/Firefox 自动改用云端百炼 ASR。两者均需允许麦克风权限。最近 {{ revision_window }} 秒内的字幕可被自动纠正。</p>
+        <p class="muted">提示：Chrome/Edge 用浏览器原生识别（零延迟）；Safari/Firefox 自动改用云端百炼 ASR。最近 {{ revision_window }} 秒内的字幕可被自动纠正。</p>
+        <p class="muted">▶️ <b>用 YouTube/视频实测</b>：把「音频源」选为 <b>标签页/系统音频</b>，点开始聆听后在 Chrome 弹窗里选正在播放视频的标签页并勾选「分享标签页音频」即可（需 Chrome + 已配置云端百炼）。</p>
       </div>
     </div>
     <div id="interim" class="interim"></div>
