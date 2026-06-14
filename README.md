@@ -176,6 +176,8 @@ echo_translate/
 
 ## 9. 演示
 
+- **真机录屏（推荐）**：[`demo.mp4`](./demo.mp4) —— 真实场景：Chrome 共享 **YouTube 标签页音频** → **百炼云端 ASR** → 实时中文字幕（带声音）。
+
 端到端走查（实时字幕 → 自动纠错 → 术语 → 纪要 → QoS 看板，**字幕为真实 AI 实时产生**）：
 
 ![demo](./demo/output/echo_translate_demo.gif)
