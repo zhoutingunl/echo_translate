@@ -34,6 +34,9 @@ instance/
 # --- large source recordings (commit the converted .mp4, not the raw .mov) ---
 *.mov
 
+# --- local-only agent skills (progress snapshot + handoff); not part of deliverable ---
+/skills/
+
 # --- OS / editor ---
 .DS_Store
 .idea/
