@@ -64,7 +64,7 @@ python app.py
 跑测试：
 
 ```bash
-pytest                 # 70 个用例，覆盖率 ~98%（阈值 85%）
+pytest                 # 81 个用例，覆盖率 ~98%（阈值 85%）
 ```
 
 ---
@@ -78,6 +78,7 @@ pytest                 # 70 个用例，覆盖率 ~98%（阈值 85%）
 - **中文语音播报（TTS）**：浏览器 `SpeechSynthesis`，可开关。
 - **演讲 / 会议双模式**：演讲＝完整流畅；会议＝低延迟简洁。
 - **会议纪要**：一键把整场译文压缩成要点（AI Summarize）。
+- **导出**：双语对照 **HTML / Markdown / SRT 字幕 / CSV / 纯文本**（左英右中、带时间戳与 `修正` 标记）；云端/标签页音频会话还可导出**多媒体 HTML**——单文件内嵌音频播放器，播放时高亮当前句、点句可跳转（音频经服务端的会话才有）。
 - **历史记录 & 埋点**：会话 / 字幕 / 事件落 SQLite。
 - **QoS Dashboard**：实时延迟 avg/P95/P99、RTF、翻译成功率、纠错率、术语命中率，并对照 `design.md §12` 目标值标注达标 / 未达标。
 
@@ -113,6 +114,7 @@ pytest                 # 70 个用例，覆盖率 ~98%（阈值 85%）
 | `metrics.py` | QoS：延迟分位、成功率、纠错率、术语命中率、RTF。 |
 | `db.py` | SQLite：sessions / segments / events / glossary / metrics。 |
 | `dashboard.py` | 看板蓝图：实时指标 vs 目标值。 |
+| `export.py` | 导出渲染：双语 HTML/MD/SRT/CSV/TXT + 内嵌音频的多媒体 HTML（纯函数，易测）。 |
 | `app.py` | Flask 路由 + `/ws` WebSocket + 回放接口。 |
 | `replay.py` | 可复现 demo 脚本（驱动真实纠错管线）。 |
 
@@ -159,7 +161,7 @@ pytest                 # 70 个用例，覆盖率 ~98%（阈值 85%）
 echo_translate/
 ├── app.py            ├── ai_service.py      ├── templates/  index.html · dashboard.html
 ├── config.py         ├── asr_engine.py      ├── static/     app.js · app.css · dashboard.js
-├── db.py             ├── asr_cloud.py       ├── tests/    （14 个测试模块，~98%）
+├── db.py             ├── asr_cloud.py       ├── tests/    （15 个测试模块，~98%）
 │                     ├── translation_engine.py
 ├── pipeline.py       ├── revision_engine.py ├── requirements.txt · pytest.ini · .coveragerc
 ├── metrics.py        ├── glossary.py        ├── .env.example · .gitignore
@@ -170,7 +172,7 @@ echo_translate/
 
 ## 8. AI 辅助开发声明（design.md §24）
 
-本项目在开发中使用了 AI 辅助。所提交代码均**可运行、测试通过（pytest 70 项 ~98% 覆盖）、README 与实现一致**；架构取舍（模型选型、ASR/TTS 方案、删去伪纠错功能等）均经实测验证，理由见 §4。
+本项目在开发中使用了 AI 辅助。所提交代码均**可运行、测试通过（pytest 81 项 ~98% 覆盖）、README 与实现一致**；架构取舍（模型选型、ASR/TTS 方案、删去伪纠错功能等）均经实测验证，理由见 §4。
 
 ## 9. 演示
 

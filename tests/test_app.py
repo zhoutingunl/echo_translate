@@ -43,6 +43,61 @@ def test_replay_and_history_routes(app_state):
     assert c.get("/api/history/none").get_json() == []
 
 
+def _seed_session(state, sid="exp1"):
+    from models import Segment, FINAL
+    state.store.create_session(sid, "English", "presentation", started_at=10.0)
+    state.store.upsert_segment(Segment(id=1, session_id=sid, source="Hello.",
+                               translation="你好。", status=FINAL, t_recognized=11.0))
+    state.store.upsert_segment(Segment(id=2, session_id=sid, source="We use Redis.",
+                               translation="我们用 Redis。", status=FINAL, corrected=True,
+                               t_recognized=13.0))
+
+
+def test_export_formats(app_state):
+    app, state = app_state
+    _seed_session(state)
+    c = app.test_client()
+    for fmt, needle in [("txt", b"Hello."), ("md", b"English"),
+                        ("csv", b"index,english"), ("srt", b"-->"), ("html", b"<audio")]:
+        r = c.get(f"/api/export/exp1.{fmt}")
+        assert r.status_code == 200, fmt
+        if fmt == "html":
+            assert b"<audio" not in r.data and b"\xe4\xbd\xa0\xe5\xa5\xbd" in r.data  # 你好, no player
+        else:
+            assert needle in r.data
+        assert "Content-Disposition" in r.headers
+
+
+def test_export_unknown_session_and_format(app_state):
+    app, state = app_state
+    _seed_session(state)
+    c = app.test_client()
+    assert c.get("/api/export/nope.txt").status_code == 404
+    assert c.get("/api/export/exp1.xml").status_code == 400
+    assert c.get("/api/export/exp1.wav").status_code == 404  # no audio captured
+
+
+def test_export_info_and_multimedia_with_audio(app_state, tmp_path):
+    app, state = app_state
+    _seed_session(state)
+    # drop a tiny WAV so the multimedia path activates
+    import wave
+    wav = f"{state.audio_dir}/exp1.wav"
+    import os
+    os.makedirs(state.audio_dir, exist_ok=True)
+    with wave.open(wav, "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(16000)
+        w.writeframes(b"\x00\x00" * 1600)
+    c = app.test_client()
+    info = c.get("/api/export/exp1/info").get_json()
+    assert info["has_audio"] is True and "wav" in info["formats"] and info["count"] == 2
+    html = c.get("/api/export/exp1.html").data
+    assert b"<audio" in html and b"data:audio/wav;base64," in html
+    assert c.get("/api/export/exp1.html?audio=0").data.count(b"<audio") == 0
+    assert c.get("/api/export/exp1.wav").status_code == 200
+    os.remove(wav)
+
+
 # ---- WebSocket handler driven by a fake socket ----
 class FakeWS:
     def __init__(self, msgs):

@@ -320,6 +320,10 @@
   $("modeSel").onchange = (e) => send({ action: "mode", mode: e.target.value });
   $("replayBtn").onclick = playReplay;
   $("summaryBtn").onclick = () => send({ action: "summarize" });
+  $("exportBtn").onclick = () => {
+    if (!sessionId) { alert("还没有可导出的会话，先「开始聆听」或「播放示例」。"); return; }
+    window.open(`/api/export/${sessionId}.${$("exportSel").value}`, "_blank");
+  };
   $("gAdd").onclick = addGlossary;
 
   loadConfig(); loadReplays(); loadGlossary(); connect();

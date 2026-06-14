@@ -91,6 +91,12 @@ class Store:
                                (ended_at or time.time(), session_id))
             self._conn.commit()
 
+    def get_session(self, session_id: str) -> Optional[dict[str, Any]]:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM sessions WHERE id=?", (session_id,)).fetchone()
+        return dict(row) if row else None
+
     def list_sessions(self, limit: int = 50) -> list[dict[str, Any]]:
         with self._lock:
             rows = self._conn.execute(
