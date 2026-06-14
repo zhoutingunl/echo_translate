@@ -1,0 +1,41 @@
+# --- Secrets (NEVER commit) ---
+.env
+.env.local
+config.local.json
+*.key
+*.pem
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.python-version
+
+# --- Test / coverage ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# --- Runtime data ---
+*.db
+*.db-journal
+*.sqlite3
+data/
+instance/
+
+# --- large source recordings (commit the converted .mp4, not the raw .mov) ---
+*.mov
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/
+*.swp
