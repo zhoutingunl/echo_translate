@@ -75,36 +75,33 @@
       </div>
 
       <div class="deck-row tools">
-        <span class="deck-label">演示与导出</span>
-        <label class="field">
-          <span>示例回放</span>
-          <select id="replaySel"></select>
-        </label>
+        <select id="replaySel" title="示例回放 — 选择演示脚本" aria-label="示例回放"></select>
         <button id="replayBtn" class="btn">▶️ 播放示例</button>
         <button id="summaryBtn" class="btn">📝 生成纪要</button>
 
         <div class="deck-sep"></div>
 
-        <label class="field">
-          <span>导出格式</span>
-          <select id="exportSel">
-            <option value="html">多媒体 / 双语 HTML</option>
-            <option value="srt">双语 SRT 字幕</option>
-            <option value="md">Markdown 对照</option>
-            <option value="csv">CSV 表格</option>
-            <option value="txt">纯文本</option>
-          </select>
-        </label>
-        <button id="exportBtn" class="btn">⬇️ 导出</button>
+        <select id="exportSel" title="选择导出格式" aria-label="导出格式">
+          <option value="html">⬇️ 多媒体 / 双语 HTML</option>
+          <option value="srt">⬇️ 双语 SRT 字幕</option>
+          <option value="md">⬇️ Markdown 对照</option>
+          <option value="csv">⬇️ CSV 表格</option>
+          <option value="txt">⬇️ 纯文本</option>
+        </select>
+        <button id="exportBtn" class="btn">导出</button>
       </div>
     </div>
 
     <div id="subtitles" class="subtitles">
       <div class="empty-hint">
         <div class="empty-icon">🎧</div>
-        <p>点击 <b>开始聆听</b> 实时翻译麦克风/系统音频，或选择 <b>示例回放</b> 一键演示自动纠错。</p>
-        <p class="muted">Chrome/Edge 用浏览器原生识别（零延迟）；Safari/Firefox 自动改用云端百炼 ASR。最近 {{ revision_window }} 秒内的字幕可被自动纠正。</p>
-        <p class="muted">▶️ <b>用 YouTube/视频实测</b>：把「音频源」选为 <b>标签页/系统音频</b>，点开始聆听后在 Chrome 弹窗里选正在播放视频的标签页并勾选「分享标签页音频」即可（需 Chrome + 已配置云端百炼）。</p>
+        <h2 class="empty-title">开始你的实时同传</h2>
+        <p class="empty-lead">点击 <b>开始聆听</b> 实时翻译麦克风 / 系统音频，或选择 <b>示例回放</b> 一键演示自动纠错。</p>
+        <ul class="empty-tips">
+          <li><span class="tip-k">识别引擎</span>Chrome / Edge 用浏览器原生识别（零延迟）；Safari / Firefox 自动改用云端百炼 ASR。</li>
+          <li><span class="tip-k">自动纠错</span>最近 {{ revision_window }} 秒内的字幕会被持续修正。</li>
+          <li><span class="tip-k">YouTube 实测</span>「音频源」选 <b>标签页 / 系统音频</b>，开始聆听后在 Chrome 弹窗里选正在播放视频的标签页并勾选「分享标签页音频」（需 Chrome + 已配置云端百炼）。</li>
+        </ul>
       </div>
     </div>
     <div id="interim" class="interim"></div>

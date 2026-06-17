@@ -152,12 +152,10 @@ h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: .2px; }
   display: flex; flex-direction: column; gap: 12px;
 }
 .deck-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
-.deck-row.tools { padding-top: 12px; border-top: 1px dashed var(--line); }
+/* tools row has no stacked labels -> center everything so selects & buttons
+   share one baseline / height (fixes the uneven-button look) */
+.deck-row.tools { align-items: center; padding-top: 12px; border-top: 1px dashed var(--line); }
 .deck-sep { flex: 1; min-width: 0; }
-.deck-label {
-  width: 100%; font-size: 11px; letter-spacing: .8px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: -2px;
-}
 
 .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .field > span { font-size: 11.5px; color: var(--muted); letter-spacing: .3px; padding-left: 2px; }
@@ -230,11 +228,19 @@ input::placeholder { color: var(--muted); }
   padding: 22px; min-height: 54vh; max-height: 66vh; overflow-y: auto;
   display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth;
 }
-.empty-hint { margin: auto; text-align: center; color: var(--muted); max-width: 520px; padding: 12px; }
-.empty-hint .empty-icon { font-size: 42px; opacity: .85; margin-bottom: 10px; }
-.empty-hint p { margin: 8px 0; }
+.empty-hint { margin: auto; text-align: left; color: var(--text-dim); max-width: 580px; padding: 8px; }
+.empty-hint .empty-icon { font-size: 40px; opacity: .9; margin-bottom: 8px; }
+.empty-title { font-size: 19px; color: var(--text); margin-bottom: 8px; }
+.empty-lead { margin: 0 0 18px; font-size: 14.5px; line-height: 1.6; }
 .empty-hint b { color: var(--text); font-weight: 600; }
-.empty-hint .muted { font-size: 13px; line-height: 1.65; }
+.empty-tips { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.empty-tips li { font-size: 13px; line-height: 1.6; color: var(--muted); }
+.tip-k {
+  display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .2px;
+  color: var(--accent); background: var(--accent-soft);
+  border: 1px solid var(--accent-line); border-radius: 6px;
+  padding: 2px 8px; margin-right: 9px; vertical-align: 1px; white-space: nowrap;
+}
 
 .seg {
   border-left: 3px solid var(--line); padding: 4px 0 6px 16px;
