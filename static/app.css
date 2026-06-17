@@ -242,6 +242,7 @@ input::placeholder { color: var(--muted); }
   border: 1px solid var(--accent-line); border-radius: 6px;
   padding: 2px 8px; white-space: nowrap; text-align: center;
 }
+.tip-v { min-width: 0; }
 
 .seg {
   border-left: 3px solid var(--line); padding: 4px 0 6px 16px;
