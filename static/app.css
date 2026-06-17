@@ -228,18 +228,19 @@ input::placeholder { color: var(--muted); }
   padding: 22px; min-height: 54vh; max-height: 66vh; overflow-y: auto;
   display: flex; flex-direction: column; gap: 16px; scroll-behavior: smooth;
 }
-.empty-hint { margin: auto; text-align: left; color: var(--text-dim); max-width: 580px; padding: 8px; }
+.empty-hint { margin: auto; text-align: left; color: var(--text-dim); max-width: 780px; padding: 8px; }
 .empty-hint .empty-icon { font-size: 40px; opacity: .9; margin-bottom: 8px; }
 .empty-title { font-size: 19px; color: var(--text); margin-bottom: 8px; }
 .empty-lead { margin: 0 0 18px; font-size: 14.5px; line-height: 1.6; }
 .empty-hint b { color: var(--text); font-weight: 600; }
 .empty-tips { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
-.empty-tips li { font-size: 13px; line-height: 1.6; color: var(--muted); }
+/* chip in its own column so the tip text gets the full remaining width on one line */
+.empty-tips li { display: grid; grid-template-columns: max-content 1fr; gap: 10px; align-items: baseline; font-size: 13px; line-height: 1.6; color: var(--muted); }
 .tip-k {
-  display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .2px;
+  font-size: 11px; font-weight: 600; letter-spacing: .2px;
   color: var(--accent); background: var(--accent-soft);
   border: 1px solid var(--accent-line); border-radius: 6px;
-  padding: 2px 8px; margin-right: 9px; vertical-align: 1px; white-space: nowrap;
+  padding: 2px 8px; white-space: nowrap; text-align: center;
 }
 
 .seg {
