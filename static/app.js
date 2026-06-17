@@ -314,6 +314,16 @@
     $("gTerm").value = ""; $("gTrans").value = ""; loadGlossary();
   }
 
+  // ------------------------------------------------------------- theme picker
+  function initTheme() {
+    const sel = $("themeSel"); if (!sel) return;
+    sel.value = document.documentElement.dataset.theme || "light";
+    sel.onchange = (e) => {
+      document.documentElement.dataset.theme = e.target.value;
+      try { localStorage.setItem("et-theme", e.target.value); } catch (_) {}
+    };
+  }
+
   // ------------------------------------------------------------------- wiring
   micBtn.onclick = () => (listening ? stopMic() : startMic());
   $("ttsChk").onchange = (e) => { ttsOn = e.target.checked; if (!ttsOn) window.speechSynthesis.cancel(); };
@@ -326,5 +336,5 @@
   };
   $("gAdd").onclick = addGlossary;
 
-  loadConfig(); loadReplays(); loadGlossary(); connect();
+  initTheme(); loadConfig(); loadReplays(); loadGlossary(); connect();
 })();

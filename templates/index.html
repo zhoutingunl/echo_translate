@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>EchoTranslate · AI 同声传译助手</title>
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("et-theme")||"light";}catch(e){}</script>
   <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
@@ -16,6 +17,13 @@
     </div>
   </div>
   <div class="top-actions">
+    <select id="themeSel" class="theme-sel" aria-label="配色主题" title="切换配色">
+      <option value="light">🌤 微光</option>
+      <option value="sky">🌊 天青</option>
+      <option value="sunset">🌅 暮色</option>
+      <option value="ocean">🌌 深海</option>
+      <option value="grape">🍇 夜紫</option>
+    </select>
     <span id="conn" class="pill pill-off">未连接</span>
     <a class="pill pill-link" href="/dashboard" target="_blank">QoS Dashboard ↗</a>
   </div>
