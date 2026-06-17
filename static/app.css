@@ -305,6 +305,8 @@ input::placeholder { color: var(--muted); }
   padding: 8px 0; border-bottom: 1px solid var(--line-soft); font-size: 13.5px;
 }
 .glossary-list li:last-child { border-bottom: 0; }
+.glossary-list li.added { animation: gloss-in 1.6s ease; border-radius: 8px; }
+@keyframes gloss-in { 0% { background: color-mix(in srgb, var(--accent) 22%, transparent); } 100% { background: transparent; } }
 .glossary-list b { color: var(--accent-2); font-weight: 600; }
 .glossary-list .del { color: var(--muted); cursor: pointer; border: none; background: none; font-size: 17px; line-height: 1; padding: 0 4px; transition: .15s; }
 .glossary-list .del:hover { color: var(--bad); }

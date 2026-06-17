@@ -300,6 +300,7 @@
     const ul = $("glossaryList"); ul.innerHTML = "";
     Object.entries(map || {}).sort().forEach(([term, tr]) => {
       const li = document.createElement("li");
+      li.dataset.term = term;
       li.innerHTML = `<span><b>${term}</b> → ${tr}</span>`;
       const del = document.createElement("button"); del.className = "del"; del.textContent = "×";
       del.onclick = async () => { await fetch("/api/glossary", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ term }) }); loadGlossary(); };
@@ -307,11 +308,21 @@
     });
   }
   async function addGlossary() {
-    const term = $("gTerm").value.trim(); if (!term) return;
+    const term = $("gTerm").value.trim();
+    if (!term) { $("gTerm").focus(); return; }
     const translation = $("gTrans").value.trim();
     await fetch("/api/glossary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ term, translation }) });
-    send({ action: "glossary_add", term, translation });
-    $("gTerm").value = ""; $("gTrans").value = ""; loadGlossary();
+    // only push to the live pipeline when a session is running (else the server
+    // replies "send 'start' first"); the term is persisted and loaded on next start.
+    if (listening) send({ action: "glossary_add", term, translation });
+    $("gTerm").value = ""; $("gTrans").value = "";
+    await loadGlossary();
+    // the list is sorted + scrollable, so a new term may land off-screen —
+    // scroll it into view and flash it so the add is visible.
+    const sel = (window.CSS && CSS.escape) ? CSS.escape(term) : term;
+    const li = document.querySelector(`#glossaryList li[data-term="${sel}"]`);
+    if (li) { li.scrollIntoView({ block: "nearest" }); li.classList.remove("added"); void li.offsetWidth; li.classList.add("added"); }
+    $("gTerm").focus();
   }
 
   // ------------------------------------------------------------- theme picker
