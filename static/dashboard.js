@@ -9,7 +9,8 @@
 
   function metricCard(label, value, check, fmtTarget) {
     const c = check || { pass: null };
-    return `<div class="metric">
+    const edge = c.pass === null ? "" : (c.pass ? " ok-edge" : " bad-edge");
+    return `<div class="metric${edge}">
       <div class="label">${label}</div>
       <div class="value ${cls(c.pass)}">${value}</div>
       <div class="target ${cls(c.pass)}">${fmtTarget ? "目标 " + fmtTarget + " · " : ""}${mark(c.pass)}</div>

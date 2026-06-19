@@ -1,43 +1,58 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>EchoTranslate · QoS Dashboard</title>
+  <script>try{document.documentElement.dataset.theme=localStorage.getItem("et-theme")||"light";}catch(e){}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="/static/app.css">
-  <style>
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; padding: 20px 24px; max-width: 1200px; margin: 0 auto; }
-    .metric { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
-    .metric .label { color: var(--muted); font-size: 13px; }
-    .metric .value { font-size: 30px; font-weight: 700; margin-top: 6px; font-variant-numeric: tabular-nums; }
-    .metric .target { font-size: 12px; margin-top: 6px; }
-    .ok { color: var(--accent2); } .bad { color: var(--bad); } .na { color: var(--muted); }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); font-size: 13px; }
-    th { color: var(--muted); font-weight: 500; }
-    .wrap { padding: 0 24px 30px; max-width: 1200px; margin: 0 auto; }
-    .card-lg { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-top: 16px; }
-  </style>
 </head>
 <body>
 <header class="topbar">
-  <div class="brand"><span class="logo">📊</span><div><h1>QoS Dashboard</h1><p class="tagline">实时质量指标 · design.md §12-13</p></div></div>
-  <a class="pill pill-link" href="/">← 返回字幕</a>
+  <div class="brand">
+    <span class="logo">📊</span>
+    <div>
+      <h1>QoS Dashboard</h1>
+      <p class="tagline">实时质量指标 · design.md §12-13</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <select id="themeSel" class="theme-sel" aria-label="配色主题" title="切换配色">
+      <option value="light">🌤 微光</option>
+      <option value="sky">🌊 天青</option>
+      <option value="sunset">🌅 暮色</option>
+      <option value="ocean">🌌 深海</option>
+      <option value="grape">🍇 夜紫</option>
+    </select>
+    <a class="pill pill-link" href="/">← 返回字幕</a>
+  </div>
 </header>
 
-<div class="grid" id="metrics"></div>
+<main class="dash">
+  <div class="eyebrow" style="margin-bottom:12px">实时指标 · 每 2 秒刷新</div>
+  <div class="grid" id="metrics"></div>
 
-<div class="wrap">
   <div class="card-lg">
-    <h3>会话历史</h3>
-    <table id="sessions"><thead><tr><th>Session</th><th>语言</th><th>模式</th><th>字幕数</th><th>开始时间</th></tr></thead><tbody></tbody></table>
+    <h3 class="panel-h">会话历史</h3>
+    <table id="sessions" class="data-table"><thead><tr><th>Session</th><th>语言</th><th>模式</th><th>字幕数</th><th>开始时间</th></tr></thead><tbody></tbody></table>
   </div>
   <div class="card-lg">
-    <h3>埋点事件 (track)</h3>
-    <table id="events"><thead><tr><th>事件</th><th>次数</th></tr></thead><tbody></tbody></table>
+    <h3 class="panel-h">埋点事件 <span class="muted mono">track</span></h3>
+    <table id="events" class="data-table"><thead><tr><th>事件</th><th>次数</th></tr></thead><tbody></tbody></table>
   </div>
-</div>
+</main>
 
+<script>
+  // keep the theme picker in sync across pages
+  (function(){ var s=document.getElementById("themeSel"); if(!s) return;
+    s.value=document.documentElement.dataset.theme||"light";
+    s.onchange=function(e){ document.documentElement.dataset.theme=e.target.value;
+      try{ localStorage.setItem("et-theme", e.target.value); }catch(_){} };
+  })();
+</script>
 <script src="/static/dashboard.js"></script>
 </body>
 </html>
